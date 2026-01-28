@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeLink</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  body { font-family: Arial; background: linear-gradient(to bottom, #a1c4fd, #c2e9fb); color: #333; margin: 0; padding: 0; }
+  header { background: rgba(0,64,128,0.85); color: white; padding: 20px; text-align: center; }
+  header h1 { margin-bottom: 10px; }
+  main { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .card { background: rgba(255,255,255,0.9); border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: transform 0.3s; }
+  .card:hover { transform: scale(1.02); }
+  .field { display: flex; justify-content: space-between; padding: 5px 0; }
+  .field i { margin-right: 10px; color: #004080; }
+  .label { font-weight: bold; }
+  .safe { color: green; font-weight: bold; }
+  .caution { color: orange; font-weight: bold; }
+  .danger { color: red; font-weight: bold; }
+  ul { padding-left: 20px; list-style-type: disc; }
+  button { margin: 10px 0; padding: 10px 15px; background:#004080; color:white; border:none; border-radius:5px; cursor:pointer; }
+  button:hover { background:#00264d; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SafeLink</h1>
+</header>
+
+<main>
+  <!-- WEATHER CARD -->
+  <section id="weather">
+    <div class="card">
+      <h2>Current Weather</h2>
+      <div class="field"><i class="fas fa-temperature-high"></i><span class="label">Temperature:</span> <span id="temp">--</span> °C (<span id="temp_desc">--</span>)</div>
+      <div class="field"><i class="fas fa-wind"></i><span class="label">Wind:</span> <span id="wind">--</span> mps (<span id="wind_desc">--</span>)</div>
+      <div class="field"><i class="fas fa-cloud-rain"></i><span class="label">Rain:</span> <span id="rain">--</span> mm (<span id="rain_desc">--</span>)</div>
+      <div class="field"><i class="fas fa-tachometer-alt"></i><span class="label">Air Pressure:</span> <span id="pressure">--</span> hPa (<span id="pressure_desc">--</span>)</div>
+      <div class="field"><i class="fas fa-water"></i><span class="label">Sea Level:</span> <span id="seaLevel">--</span> (<span id="seaLevel_desc">--</span>)</div>
+      <div class="field"><i class="fas fa-tint"></i><span class="label">Humidity:</span> <span id="humidity">--</span>% (<span id="humidity_desc">--</span>)</div>
+      <div class="field"><i class="fas fa-fish"></i><span class="label">Fishing Status:</span> <span id="fishing">--</span></div>
+      <button onclick="fetchWeather()">Refresh Now</button>
+    </div>
+  </section>
+
+  <!-- FISHING TIPS -->
+  <section id="tips">
+    <div class="card">
+      <h2>Fishing Tips</h2>
+      <ul id="tips"></ul>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="howItWorks">
+    <div class="card">
+      <h2>How SafeLink Works</h2>
+      <p>This system monitors real-time weather using OpenWeather API.</p>
+      <p>It provides fishing advisory based on temperature, wind, rain, pressure, and sea level (like ESP32 Arduino logic).</p>
+      <p>Website fetches new data every 10 minutes automatically from Google Apps Script.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  © 2026 SafeLink
+</footer>
+
+<script>
+  // ---------------------- STEP 2: Apps Script API URL ----------------------
+  const JSON_URL = "https://script.google.com/macros/s/AKfycbzhLP_wwhvED6nJEVmpF8YkoHZZsxuaJLts91wOBj3Sku1R38mqVcoz3KHWLiHQ3M55ng/exec";
+
+  // ---------------------- STEP 3: Fetch Data Function ----------------------
+  async function fetchWeather() {
+    try {
+      const response = await fetch(JSON_URL);
+      const data = await response.json();
+
+      // Weather values
+      document.getElementById("temp").innerText = data.temp;
+      document.getElementById("temp_desc").innerText = data.temp_desc;
+      document.getElementById("wind").innerText = data.wind;
+      document.getElementById("wind_desc").innerText = data.wind_desc;
+      document.getElementById("rain").innerText = data.rain;
+      document.getElementById("rain_desc").innerText = data.rain_desc;
+      document.getElementById("pressure").innerText = data.pressure;
+      document.getElementById("pressure_desc").innerText = data.pressure_desc;
+      document.getElementById("seaLevel").innerText = data.sea_level;
+      document.getElementById("seaLevel_desc").innerText = data.sea_level_desc;
+      document.getElementById("humidity").innerText = data.humidity;
+      document.getElementById("humidity_desc").innerText = data.humidity_desc;
+
+      // Fishing status
+      const fishingEl = document.getElementById("fishing");
+      fishingEl.innerText = data.fishing_status;
+      fishingEl.className = "";
+      if(data.fishing_status.toLowerCase().includes("safe")) fishingEl.classList.add("safe");
+      else if(data.fishing_status.toLowerCase().includes("risk")) fishingEl.classList.add("caution");
+      else fishingEl.classList.add("danger");
+
+      // Fishing tips
+      const tipsList = document.getElementById("tips");
+      tipsList.innerHTML = "";
+      data.tips.forEach(tip => {
+        const li = document.createElement("li");
+        li.innerText = tip;
+        tipsList.appendChild(li);
+      });
+
+    } catch(err) {
+      console.error("Failed to fetch weather:", err);
+    }
+  }
+
+  // Initial fetch
+  fetchWeather();
+
+  // Auto-update every 10 minutes (600000 ms)
+  setInterval(fetchWeather, 600000);
+</script>
+
+</body>
+</html>
